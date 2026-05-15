@@ -1,1 +1,32 @@
+name: Initialize Dataset Folders
 
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  create-folders:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create Directory Structure
+        run: |
+          # 核心命令：大括号展开语法一次性创建6个文件夹
+          mkdir -p {images/,labels/}{train,val,test}
+          # 在每个文件夹里放一个隐藏文件以保证结构被Git追踪
+          for dir in images/* labels/*; do
+            touch $dir/.gitkeep
+          done
+          
+      - name: Commit and Push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          # 只有在有变化时才提交
+          git diff --staged --quiet || git commit -m "chore: ensure dataset folder structure"
+          git push
